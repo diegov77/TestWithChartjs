@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<div>
+    <h1>Test for NGP</h1>
+
+    <form action="post" id="form-new-task">
+        <div class="row">
+            <div class="col-md-2">
+                <h4><b>Home Page 1</b></h4>
+            </div>
+            <div class="col-md-2 col-md-offset-4">
+                <div class="input-group date date-picker" id="start-date">
+                    <input id="start_date" type='text' class="form-control" placeholder="Start date" name="start_date" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-2">
+
+                <div class="input-group date date-picker" id="end-date">
+                    <input id="end_date" type='text' class="form-control" placeholder="End date" name="end_date" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+
+            </div>
+            <div class="col-md-2">
+                <input type="button" class="btn btn-primary" id="search-chart" value="Search" />
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <canvas id="myChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+        
+    </form>
+</div>
+
+
+@section Scripts {
+    <script type="text/javascript">
+
+        window.chartColors = [
+            'rgb(255, 99, 132)',
+            'rgb(255, 159, 64)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+            'rgb(201, 203, 207)',
+            'rgb(38, 174, 187)',
+            'rgb(188, 38, 83)',
+            'rgb(151, 200, 0)'
+        ];
+
+        $(document).ready(function () {
+
+            $('.date-picker').datetimepicker({
+                format: 'YYYY-MM-DD'
+            });
+
+        });
+
+        function searchData() {
+
+            var start = $("#start_date").val();
+            var end = $("#end_date").val();
+            
+            var dataType = 'application/json; charset=utf-8';
+            var dates = {
+                StartDate: start,
+                EndDate: end
+            }
+
+            console.log('Submitting form...');
+            console.log(dates);
+            $.ajax({
+                type: 'POST',
+                url: '/Home/PupulateChart',
+                dataType: 'json',
+                contentType: dataType,
+                data: JSON.stringify(dates),
+                success: function (result) {
+                    console.log('Data received: ');
+                    var data = lineDataHandler(result);
+
+                    loadChart(data);
+                }
+            });
+        }
+
+        function lineDataHandler(dataApp) {
+
+            var labels = [];
+            var amounts = [];
+            for (var i = 0; i < dataApp.length; i++) {
+                labels.push(dataApp[i].date);
+                @*if (dataApp[i].amount < 1 && dataApp[i].amount > 0) {
+                    amounts.push(Math.ceil(dataApp[i].amount));
+                } else {
+                    amounts.push(dataApp[i].amount.toFixed(0));
+                }*@
+                amounts.push(Math.ceil(dataApp[i].amount));
+            }
+            var data = {
+                labels: labels,
+                amounts: amounts
+            };
+            return data;
+        }
+
+        function loadChart(data) {
+            var ctx = $('#myChart');
+            console.log(data);
+
+            var labels = data.labels;
+            var amounts = data.amounts;
+
+            var myLineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Bitcoin Price Index',
+                            data: amounts,
+                            fill: false,
+                            backgroundColor: window.chartColors[4],
+                            borderColor: window.chartColors[4]
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'Chart.js Line Chart'
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Month'
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
+                            }
+                        }]
+                    }
+                }
+            });
+
+        }    
+
+        $("#search-chart").on('click', function () {
+            searchData();
+        });
+    </script>
+}
