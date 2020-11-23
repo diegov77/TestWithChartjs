@@ -34,18 +34,30 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <canvas id="myChart" width="400" height="400"></canvas>
-            </div>
-        </div>
-        
     </form>
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <canvas id="myChart" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    
+    <div id="alert-line-chart" class="alert alert-info alert-dismissible hidden">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        No data available to show.
+    </div>
 </div>
 
 
 @section Scripts {
     <script type="text/javascript">
+        $(document).ready(function () {
+            $('.date-picker').datetimepicker({
+                format: 'YYYY-MM-DD'
+            });
+        });
+        
 
         window.chartColors = [
             'rgb(255, 99, 132)',
@@ -60,18 +72,16 @@
             'rgb(151, 200, 0)'
         ];
 
-        $(document).ready(function () {
-
-            $('.date-picker').datetimepicker({
-                format: 'YYYY-MM-DD'
-            });
-
-        });
-
+        
         function searchData() {
 
             var start = $("#start_date").val();
             var end = $("#end_date").val();
+
+            if (start == "" || end == "") {
+                alert("Fields Start date, End date are required");
+                return 0;
+            }
             
             var dataType = 'application/json; charset=utf-8';
             var dates = {
@@ -80,18 +90,27 @@
             }
 
             console.log('Submitting form...');
-            console.log(dates);
+            
             $.ajax({
                 type: 'POST',
                 url: '/Home/PupulateChart',
                 dataType: 'json',
                 contentType: dataType,
-                data: JSON.stringify(dates),
-                success: function (result) {
-                    console.log('Data received: ');
+                data: JSON.stringify(dates)
+            }).done(function (result) {
+                if (result.length !== 0) {
+                    
                     var data = lineDataHandler(result);
 
                     loadChart(data);
+                }
+                else {
+                    if (window.myLineChart) {
+                        $("#alert-line-chart").removeClass("hidden");
+                        window.myLineChart.destroy();
+                    }
+                    $("#alert-line-chart").removeClass("hidden");
+
                 }
             });
         }
@@ -102,12 +121,8 @@
             var amounts = [];
             for (var i = 0; i < dataApp.length; i++) {
                 labels.push(dataApp[i].date);
-                @*if (dataApp[i].amount < 1 && dataApp[i].amount > 0) {
-                    amounts.push(Math.ceil(dataApp[i].amount));
-                } else {
-                    amounts.push(dataApp[i].amount.toFixed(0));
-                }*@
-                amounts.push(Math.ceil(dataApp[i].amount));
+                
+                amounts.push(dataApp[i].amount);
             }
             var data = {
                 labels: labels,
@@ -118,12 +133,14 @@
 
         function loadChart(data) {
             var ctx = $('#myChart');
-            console.log(data);
 
             var labels = data.labels;
             var amounts = data.amounts;
 
-            var myLineChart = new Chart(ctx, {
+            if (window.myLineChart) {
+                window.myLineChart.destroy();
+            }
+            window.myLineChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -175,5 +192,6 @@
         $("#search-chart").on('click', function () {
             searchData();
         });
+
     </script>
 }

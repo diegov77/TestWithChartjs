@@ -14,44 +14,32 @@ namespace TestWithChartjs.Controllers
     public class HomeController : Controller
     {
         ChartRepository _chartRepo = new ChartRepository();
-        private string apiUrl = "https://api.coindesk.com/v1/bpi/historical/close.json";
 
         public IActionResult Index()
         {
             return View();
         }
 
+        //endpoint to receive request to get external data.
         [HttpPost]
         public IActionResult PupulateChart([FromBody] ChartModel dates)
         {
-            string startDate = dates.StartDate;
-            string endDate = dates.EndDate;
-
-            List<BpiModel> data = _chartRepo.GetDataChart(startDate, endDate);
-
-            return Json(data);
-        }
-
-        public dynamic GetDataChart(string startDate, string endDate)
-        {
-            string url =
-                "{api-url}?start={api-start}&end={api-end}"
-                    .Replace("{api-url}", apiUrl)
-                    .Replace("{api-start}", startDate)
-                    .Replace("{api-end}", endDate);
-
-
-            //using (WebClientEx wc = new WebClientEx(600000))
-            using (WebClient wc = new WebClient())
+            List<BpiModel> data = new List<BpiModel>();
+            try
             {
-                var downlaod = wc.DownloadString(url);
-
-                var response = JsonConvert.DeserializeObject<dynamic>(downlaod);
-                //List<dynamic> response = JsonConvert.DeserializeObject<List<dynamic>>(jObject.response.ToString());
-
-                return response;
+                string startDate = dates.StartDate;
+                string endDate = dates.EndDate;
+                //method called from repository class to retrieve external data.
+                data = _chartRepo.GetDataChart(startDate, endDate);
+                return Json(data);
             }
+            catch (Exception ex)
+            {
+                return Json(data);
+            }
+            
         }
+
 
         public IActionResult About()
         {
@@ -87,5 +75,4 @@ namespace TestWithChartjs.Controllers
         public string EndDate { get; set; }
     }
 
-    //"Object reference not set to an instance of an object."
 }

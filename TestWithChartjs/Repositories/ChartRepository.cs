@@ -11,6 +11,7 @@ namespace TestWithChartjs.Repositories
         //https://api.coindesk.com/v1/bpi/historical/close.json?start=2020-01-01&end=2020-12-31
         private string apiUrl = "https://api.coindesk.com/v1/bpi/historical/close.json";
 
+        //Method to retrive external data from https://api.coindesk.com
         public List<BpiModel> GetDataChart(string startDate, string endDate)
         {
             string url =
@@ -20,7 +21,6 @@ namespace TestWithChartjs.Repositories
                     .Replace("{api-end}", endDate);
 
 
-            //using (WebClientEx wc = new WebClientEx(600000))
             using (WebClient wc = new WebClient())
             {
                 var downlaod = wc.DownloadString(url);
@@ -28,7 +28,7 @@ namespace TestWithChartjs.Repositories
                 var data = JsonConvert.DeserializeObject<dynamic>(downlaod);
                 string dates = JsonConvert.SerializeObject(data.bpi);
                 var bpi = JsonConvert.DeserializeObject<Dictionary<string, string>>(dates);
-                //List<dynamic> response = JsonConvert.DeserializeObject<List<dynamic>>(jObject.response.ToString());
+                
                 List<BpiModel> response = new List<BpiModel>();
 
                 for (int i = 0; i < bpi.Count; i++)
